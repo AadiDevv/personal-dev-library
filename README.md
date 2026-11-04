@@ -50,3 +50,30 @@ L'objectif est que chaque élément de la bibliothèque soit autonome et immédi
 - Quand une nouvelle solution, un composant ou un pattern intéressant est créé dans un projet, il peut être ajouté ici dans le dossier correspondant.
 - Garder le code proche de sa version fonctionnelle originale, pour qu'il reste une référence fiable.
 - Ajouter un petit `README.md` dans le dossier quand cela apporte du contexte utile.
+
+### Une ressource en plusieurs variantes : un seul code, une prop `variante`
+
+Quand une solution ou un composant a été conçu en plusieurs variantes (pistes
+comparées en maquette avec le client), on les range **toutes dans le même
+code**, choisies par une seule prop (`variante="…"`), et non un dossier par
+variante. Sept dossiers presque identiques divergent au premier correctif ; un
+seul code se corrige une fois pour toutes les variantes.
+
+- **Ce qui est commun reste commun** : logique, état, formulaire, accessibilité.
+  Seul ce qui change d'une variante à l'autre devient un petit adaptateur
+  interne, rangé dans une table (`Record<Variante, …>`). Ajouter une variante =
+  ajouter une entrée.
+- **L'interface reste courte** : la variante, plus les quelques entrées dont
+  l'appelant a vraiment besoin, avec des valeurs par défaut pour le reste.
+- **Le README du dossier compare les variantes** : ce qu'on voit, ce que ça
+  apporte, ce que ça coûte, laquelle a été retenue en production et pourquoi
+  (avec les mots du client), et comment choisir sur un nouveau projet. C'est ce
+  qui évite de refaire tout le cycle de maquettes à chaque projet.
+- **Vérifier chaque variante au rendu** avant de l'intégrer ici, même celles qui
+  n'ont jamais été en production, et le dire dans le README.
+- À intégrer **depuis la session qui vient de coder la ressource** : elle a
+  encore en tête les pistes écartées et les pièges, qu'une session fraîche
+  devrait reconstituer.
+
+Exemples : `solutions/retours-visiteurs/` (huit variantes de point d'entrée),
+`components/apercu-cours/` (deux variantes).
