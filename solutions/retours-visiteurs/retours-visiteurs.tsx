@@ -14,7 +14,7 @@
  *
  * ```tsx
  * <RetoursVisiteurs
- *   variante="pilule-repliable"   // le point d'entrée, voir VARIANTES
+ *   variante="pilule-menu"        // le point d'entrée, voir VARIANTES
  *   envoyer={envoyerRetour}        // Server Action : (FormData) => Promise<ResultatRetour>
  *   whatsapp="https://wa.me/33…"   // facultatif : les variantes qui l'affichent le fusionnent
  * />
@@ -158,8 +158,10 @@ export const VARIANTES = [
   "etiquette",
   /** F1 · Une pilule en deux moitiés : avis à gauche, WhatsApp à droite. */
   "pilule",
-  /** F4 · La pilule F1 dont le libellé se replie pendant le défilement sur téléphone. Retenue par Médine. */
+  /** F4 · La pilule F1 dont le libellé se replie pendant le défilement sur téléphone. */
   "pilule-repliable",
+  /** F4 + C · La pilule repliable devient un seul bouton qui ouvre le menu de C. Retenue par Médine (2026-11-06). */
+  "pilule-menu",
   /** D · Rien ne flotte : une ligne « Un souci sur cette page ? » là où le composant est posé (avant le pied de page). */
   "bas-de-page",
 ] as const;
@@ -638,21 +640,56 @@ function MenuDeuxPortes({ t, whatsapp, ouvrirAvis, fermer }: { t: Textes; whatsa
   );
 }
 
-/** Les deux variantes à menu : seul le bouton fermé diffère. */
-function AvecMenu({ libelle, ...p }: ProprietesEntree & { libelle: boolean }) {
+/**
+ * Les variantes à menu : seul le bouton fermé diffère (`rond`, `libelle`,
+ * `pilule`). Sans WhatsApp, le menu n'aurait qu'une ligne : le bouton ouvre
+ * alors directement le formulaire. Échap et un clic ailleurs ferment le menu.
+ */
+function AvecMenu({ forme, ...p }: ProprietesEntree & { forme: "rond" | "libelle" | "pilule" }) {
   const [ouvert, setOuvert] = useState(false);
+  const zone = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!ouvert) return;
+    const surTouche = (e: KeyboardEvent) => e.key === "Escape" && setOuvert(false);
+    const surClic = (e: PointerEvent) => !zone.current?.contains(e.target as Node) && setOuvert(false);
+    document.addEventListener("keydown", surTouche);
+    document.addEventListener("pointerdown", surClic);
+    return () => {
+      document.removeEventListener("keydown", surTouche);
+      document.removeEventListener("pointerdown", surClic);
+    };
+  }, [ouvert]);
+  const libelle = forme === "libelle";
   return (
-    <div className="flex flex-col items-end gap-3">
+    <div ref={zone} className="flex flex-col items-end gap-3">
       {ouvert && <MenuDeuxPortes t={p.t} whatsapp={p.whatsapp} ouvrirAvis={p.ouvrirAvis} fermer={() => setOuvert(false)} />}
       <button
         type="button"
-        aria-expanded={ouvert}
-        aria-label={ouvert ? p.t.bulles.fermer : undefined}
-        onClick={() => setOuvert((o) => !o)}
-        className={cx("flex h-13 items-center rounded-full bg-accent text-accent-foreground", ombre, anneau, libelle && !ouvert ? "gap-2.5 pr-5 pl-3" : "w-13 justify-center")}
+        aria-expanded={p.whatsapp ? ouvert : undefined}
+        aria-label={ouvert ? p.t.bulles.fermer : forme === "pilule" ? undefined : p.t.avis}
+        onClick={() => (p.whatsapp ? setOuvert((o) => !o) : p.ouvrirAvis())}
+        className={cx(
+          "flex h-13 items-center overflow-hidden rounded-full",
+          ombre,
+          anneau,
+          forme === "pilule" && !ouvert ? "border border-border-subtle bg-bg-raised text-text-primary" : "bg-accent text-accent-foreground",
+          ouvert || forme === "rond" ? "w-13 justify-center" : libelle ? "gap-2.5 pr-5 pl-3" : "",
+        )}
       >
         {ouvert ? (
           <IconClose className="h-6 w-6" />
+        ) : forme === "pilule" ? (
+          <>
+            <span className="flex items-center pr-3.5 pl-4">
+              <IconAvis className="h-5 w-5 shrink-0" />
+              <Libelle texte={p.t.avis} replie={p.replie} />
+            </span>
+            {p.whatsapp && (
+              <span className="flex h-full w-13 items-center justify-center bg-brand-whatsapp text-on-media">
+                <IconWhatsapp className="h-7 w-7" />
+              </span>
+            )}
+          </>
         ) : libelle ? (
           <>
             <span className="flex -space-x-1.5">
@@ -685,8 +722,8 @@ const POINTS_ENTREE: Record<Exclude<Variante, "languette" | "bas-de-page">, (p: 
       {whatsapp && <RondWhatsapp href={whatsapp} t={t} />}
     </div>
   ),
-  "bulle-menu": (p) => <AvecMenu {...p} libelle={false} />,
-  "bouton-menu": (p) => <AvecMenu {...p} libelle />,
+  "bulle-menu": (p) => <AvecMenu {...p} forme="rond" />,
+  "bouton-menu": (p) => <AvecMenu {...p} forme="libelle" />,
   etiquette: ({ t, whatsapp, ouvrirAvis }) => (
     <div className="flex items-center">
       <button type="button" onClick={ouvrirAvis} className={cx("-mr-5 flex h-9.5 items-center gap-2 rounded-l-sm bg-text-primary pr-8 pl-3.5 text-sm font-semibold text-text-inverse", ombre, anneau)}>
@@ -698,6 +735,7 @@ const POINTS_ENTREE: Record<Exclude<Variante, "languette" | "bas-de-page">, (p: 
   ),
   pilule: (p) => <Pilule {...p} replie={false} />,
   "pilule-repliable": (p) => <Pilule {...p} />,
+  "pilule-menu": (p) => <AvecMenu {...p} forme="pilule" />,
 };
 
 /* ══ Le module ═════════════════════════════════════════════════════════════ */
@@ -836,7 +874,7 @@ export default function RetoursVisiteurs({
 
   // Libellé replié pendant le défilement : téléphone et variante repliable seulement.
   useEffect(() => {
-    if (!telephone || variante !== "pilule-repliable") return;
+    if (!telephone || (variante !== "pilule-repliable" && variante !== "pilule-menu")) return;
     let minuteur = 0;
     const surDefilement = () => {
       setReplie(true);
