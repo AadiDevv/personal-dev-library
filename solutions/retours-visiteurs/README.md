@@ -1,4 +1,4 @@
-# Retours des visiteurs : un bouton d'avis, huit variantes
+# Retours des visiteurs : un bouton d'avis, neuf variantes
 
 Un bouton présent sur toutes les pages pour signaler un souci, donner une idée,
 un besoin ou une critique, avec captures d'écran. Le site relève tout seul ce
@@ -46,7 +46,7 @@ import RetoursVisiteurs from "@/components/RetoursVisiteurs";
 import { envoyerRetour } from "@/app/actions-retour"; // retours-visiteurs.server.ts
 
 <RetoursVisiteurs
-  variante="pilule-repliable"
+  variante="pilule-menu"
   envoyer={envoyerRetour}
   whatsapp="https://wa.me/33600000000"
   nouveautes={[{ cle: "cours-gratuits", prefixe: "/cours-gratuits" }]}
@@ -71,7 +71,7 @@ Une fonction ne passe d'un Server Component à un Client Component que si c'est
 une Server Action : pour `analytics`, envelopper le composant dans un petit
 Client Component.
 
-## 3. Les huit variantes
+## 3. Les neuf variantes
 
 Une seule prop, `variante`. Toutes partagent le formulaire, les bulles, le
 contexte et le panneau (ancré sur ordinateur, tiroir qui monte du bas sur
@@ -86,9 +86,10 @@ téléphone et tablette) ; seul le point d'entrée change.
 | `etiquette` (F3) | La bulle WhatsApp intacte, une étiquette « Un souci, une idée ? » glissée dessous | La bulle connue ne change pas | Deux couleurs fortes côte à côte ; 61 % de la largeur |
 | `pilule` (F1) | Une pilule en deux moitiés : « Un avis ? » à gauche, WhatsApp à droite | Un seul objet, WhatsApp en un toucher, les deux usages lisibles | Deux zones collées : c'est le changement de couleur qui les sépare |
 | `pilule-repliable` (F4) | F1, dont le libellé se replie en icône pendant le défilement sur téléphone | Le libellé reste là au repos, sans couvrir le texte qu'on lit | Un mouvement de plus à l'écran |
+| `pilule-menu` (F4 + C) | La pilule repliable, mais un seul bouton : le toucher ouvre le menu de C, la pilule devient une croix | Fermée, elle montre les deux usages ; ouverte, chacun est écrit en toutes lettres | WhatsApp passe à deux touchers |
 | `bas-de-page` (D) | Rien ne flotte : une ligne « Un souci sur cette page ? » posée avant le pied de page | Zéro ajout pendant la lecture | Il faut descendre en bas : un visiteur bloqué en haut ne la voit pas |
 
-**Médine a retenu `pilule-repliable`.** Retours du client sur le chemin : A
+**Médine a retenu `pilule-menu`** (le 2026-11-06, après une semaine sur `pilule-repliable`). Mise en ligne, la pilule ouvrait directement le formulaire ou WhatsApp selon la moitié touchée ; le client attendait le menu de C au toucher, et a accepté que WhatsApp passe à deux touchers. Retours sur le chemin : A
 « trop chiant à l'écran, trop au milieu » ; B « très bien, mais pourquoi deux
 trucs de chat ? » ; C « super, mais on ne voit pas ce que c'est quand c'est
 fermé ». Il voulait un seul bouton qui montre les deux, avec un libellé lisible
@@ -97,6 +98,8 @@ fermé ». Il voulait un seul bouton qui montre les deux, avec un libellé lisib
 Choisir sur un autre projet :
 - **un WhatsApp qui amène les inscriptions** → `pilule` ou `pilule-repliable`
   (WhatsApp reste à un toucher) ;
+- **un client qui veut lire les deux choix avant de toucher** → `pilule-menu`
+  (suivre les clics WhatsApp après le changement) ;
 - **pas de WhatsApp** → `pilule-repliable` sans `whatsapp` (il reste « Un
   avis ? »), ou `languette` ;
 - **site de lecture longue où rien ne doit flotter** → `bas-de-page`, en
@@ -131,6 +134,8 @@ une extension ou un script tiers qui plante n'est pas un bug du site.
 
 | Point | Pourquoi |
 |---|---|
+| Le menu ne rend pas le focus quand il mène au formulaire | Constaté chez Médine (menu en Popover Radix) : le focus rendu à la pilule tombe hors du panneau tout juste ouvert sur ordinateur, qui se referme aussitôt. D'où `onCloseAutoFocus` bloqué dans ce cas. Le menu de ce fichier est un simple état, sans ce retour de focus. |
+| Sans WhatsApp, pas de menu | Un menu d'une seule ligne est un toucher pour rien : le bouton ouvre directement le formulaire (`/contact`, application installée). |
 | `min-w-0` sur le libellé repliable | Un élément d'une rangée flexible ne descend pas sous la largeur de son texte : sans lui, `max-w-0` ne replie rien (constaté). |
 | Libellé replié par `max-w-0`, pas `hidden` | Le texte reste lu par les lecteurs d'écran, et le nom du bouton ne change pas. |
 | Panneau contrôlé, **sans** déclencheur | Le tiroir de vaul enveloppe son déclencheur : poser la pilule entière dedans ouvrirait le formulaire en touchant la moitié WhatsApp. On ouvre par `ouvrir()`. |

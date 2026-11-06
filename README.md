@@ -75,5 +75,5 @@ seul code se corrige une fois pour toutes les variantes.
   encore en tête les pistes écartées et les pièges, qu'une session fraîche
   devrait reconstituer.
 
-Exemples : `solutions/retours-visiteurs/` (huit variantes de point d'entrée),
+Exemples : `solutions/retours-visiteurs/` (neuf variantes de point d'entrée),
 `components/apercu-cours/` (deux variantes).
